@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/movie.dart';
 import '../services/omdb_service.dart';
+import 'movie_detail_page.dart';
 
 class MovieSearchPage extends StatefulWidget {
   const MovieSearchPage({super.key, this.service});
@@ -63,6 +64,7 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
 
       setState(() {
         _movies = movies;
+        _errorMessage = null;
       });
     } on OmdbException catch (error) {
       if (!mounted) {
@@ -150,41 +152,54 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final movie = _movies[index];
-        return _MovieCard(movie: movie);
+        return _MovieCard(movie: movie, onTap: () => _openMovieDetails(movie));
       },
+    );
+  }
+
+  Future<void> _openMovieDetails(Movie movie) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) => MovieDetailPage(movie: movie, service: _service),
+      ),
     );
   }
 }
 
 class _MovieCard extends StatelessWidget {
-  const _MovieCard({required this.movie});
+  const _MovieCard({required this.movie, required this.onTap});
 
   final Movie movie;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _MoviePoster(movie: movie),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    movie.title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text('Annee : ${movie.year}'),
-                ],
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _MoviePoster(movie: movie),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      movie.title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text('Annee : ${movie.year}'),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
