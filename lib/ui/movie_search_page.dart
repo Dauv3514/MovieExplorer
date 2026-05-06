@@ -6,6 +6,7 @@ import '../providers/favorites_provider.dart';
 import '../services/omdb_service.dart';
 import 'favorites_page.dart';
 import 'movie_detail_page.dart';
+import 'widgets/theme_toggle_button.dart';
 
 class MovieSearchPage extends StatefulWidget {
   const MovieSearchPage({super.key, this.service});
@@ -102,6 +103,7 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
       appBar: AppBar(
         title: const Text('Movie Explorer'),
         actions: [
+          const ThemeToggleButton(),
           IconButton(
             onPressed: _openFavoritesPage,
             icon: const Icon(Icons.star),

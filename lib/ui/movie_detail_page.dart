@@ -5,6 +5,7 @@ import '../models/movie.dart';
 import '../models/movie_details.dart';
 import '../providers/favorites_provider.dart';
 import '../services/omdb_service.dart';
+import 'widgets/theme_toggle_button.dart';
 
 class MovieDetailPage extends StatefulWidget {
   const MovieDetailPage({super.key, required this.movie, this.service});
@@ -79,6 +80,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
       appBar: AppBar(
         title: const Text('Detail du film'),
         actions: [
+          const ThemeToggleButton(),
           IconButton(
             onPressed: () => favoritesProvider.toggleFavorite(widget.movie),
             icon: Icon(

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/movie.dart';
 import '../providers/favorites_provider.dart';
 import 'movie_detail_page.dart';
+import 'widgets/theme_toggle_button.dart';
 
 class FavoritesPage extends StatelessWidget {
   const FavoritesPage({super.key});
@@ -14,7 +15,10 @@ class FavoritesPage extends StatelessWidget {
     final favoriteMovies = favoritesProvider.favoriteMovies;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Favoris')),
+      appBar: AppBar(
+        title: const Text('Favoris'),
+        actions: const [ThemeToggleButton()],
+      ),
       body: favoriteMovies.isEmpty
           ? const Center(
               child: Padding(
