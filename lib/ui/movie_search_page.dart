@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/movie.dart';
+import '../providers/favorites_provider.dart';
 import '../services/omdb_service.dart';
+import 'favorites_page.dart';
 import 'movie_detail_page.dart';
 
 class MovieSearchPage extends StatefulWidget {
@@ -25,7 +28,7 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
   @override
   void initState() {
     super.initState();
-    _service = widget.service ?? OmdbService();
+    _service = widget.service ?? context.read<OmdbService>();
   }
 
   @override
@@ -93,8 +96,19 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesProvider = context.watch<FavoritesProvider>();
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Movie Explorer')),
+      appBar: AppBar(
+        title: const Text('Movie Explorer'),
+        actions: [
+          IconButton(
+            onPressed: _openFavoritesPage,
+            icon: const Icon(Icons.star),
+            tooltip: 'Favoris',
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -116,14 +130,14 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
               child: const Text('Rechercher'),
             ),
             const SizedBox(height: 16),
-            Expanded(child: _buildContent(context)),
+            Expanded(child: _buildContent(favoritesProvider)),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent(FavoritesProvider favoritesProvider) {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -152,7 +166,13 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
         final movie = _movies[index];
-        return _MovieCard(movie: movie, onTap: () => _openMovieDetails(movie));
+
+        return _MovieCard(
+          movie: movie,
+          isFavorite: favoritesProvider.isFavorite(movie.imdbId),
+          onTap: () => _openMovieDetails(movie),
+          onToggleFavorite: () => favoritesProvider.toggleFavorite(movie),
+        );
       },
     );
   }
@@ -164,13 +184,26 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
       ),
     );
   }
+
+  Future<void> _openFavoritesPage() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(builder: (context) => const FavoritesPage()),
+    );
+  }
 }
 
 class _MovieCard extends StatelessWidget {
-  const _MovieCard({required this.movie, required this.onTap});
+  const _MovieCard({
+    required this.movie,
+    required this.isFavorite,
+    required this.onTap,
+    required this.onToggleFavorite,
+  });
 
   final Movie movie;
+  final bool isFavorite;
   final VoidCallback onTap;
+  final VoidCallback onToggleFavorite;
 
   @override
   Widget build(BuildContext context) {
@@ -197,6 +230,16 @@ class _MovieCard extends StatelessWidget {
                     Text('Annee : ${movie.year}'),
                   ],
                 ),
+              ),
+              IconButton(
+                onPressed: onToggleFavorite,
+                icon: Icon(
+                  isFavorite ? Icons.star : Icons.star_border,
+                  color: Colors.amber,
+                ),
+                tooltip: isFavorite
+                    ? 'Retirer des favoris'
+                    : 'Ajouter aux favoris',
               ),
             ],
           ),

@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../models/movie.dart';
 import '../models/movie_details.dart';
+import '../providers/favorites_provider.dart';
 import '../services/omdb_service.dart';
 
 class MovieDetailPage extends StatefulWidget {
-  const MovieDetailPage({
-    super.key,
-    required this.movie,
-    required this.service,
-  });
+  const MovieDetailPage({super.key, required this.movie, this.service});
 
   final Movie movie;
-  final OmdbService service;
+  final OmdbService? service;
 
   @override
   State<MovieDetailPage> createState() => _MovieDetailPageState();
@@ -20,12 +18,14 @@ class MovieDetailPage extends StatefulWidget {
 
 class _MovieDetailPageState extends State<MovieDetailPage> {
   MovieDetails? _movieDetails;
+  late final OmdbService _service;
   bool _isLoading = true;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
+    _service = widget.service ?? context.read<OmdbService>();
     _loadMovieDetails();
   }
 
@@ -36,9 +36,7 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
     });
 
     try {
-      final movieDetails = await widget.service.getMovieDetails(
-        widget.movie.imdbId,
-      );
+      final movieDetails = await _service.getMovieDetails(widget.movie.imdbId);
 
       if (!mounted) {
         return;
@@ -74,13 +72,28 @@ class _MovieDetailPageState extends State<MovieDetailPage> {
 
   @override
   Widget build(BuildContext context) {
+    final favoritesProvider = context.watch<FavoritesProvider>();
+    final isFavorite = favoritesProvider.isFavorite(widget.movie.imdbId);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Detail du film')),
-      body: _buildContent(context),
+      appBar: AppBar(
+        title: const Text('Detail du film'),
+        actions: [
+          IconButton(
+            onPressed: () => favoritesProvider.toggleFavorite(widget.movie),
+            icon: Icon(
+              isFavorite ? Icons.star : Icons.star_border,
+              color: Colors.amber,
+            ),
+            tooltip: isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris',
+          ),
+        ],
+      ),
+      body: _buildContent(),
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent() {
     if (_isLoading) {
       return const Center(child: CircularProgressIndicator());
     }

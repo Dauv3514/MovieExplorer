@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:provider/provider.dart';
 
+import 'providers/favorites_provider.dart';
+import 'services/omdb_service.dart';
 import 'ui/movie_search_page.dart';
 
 Future<void> main() async {
@@ -16,14 +19,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Movie Explorer',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
-        useMaterial3: true,
+    return MultiProvider(
+      providers: [
+        Provider<OmdbService>(create: (_) => OmdbService()),
+        ChangeNotifierProvider<FavoritesProvider>(
+          create: (_) => FavoritesProvider(),
+        ),
+      ],
+      child: MaterialApp(
+        title: 'Movie Explorer',
+        debugShowCheckedModeBanner: false,
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+          useMaterial3: true,
+        ),
+        home: const MovieSearchPage(),
       ),
-      home: const MovieSearchPage(),
     );
   }
 }
