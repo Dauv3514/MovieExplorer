@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -18,9 +20,12 @@ class MovieSearchPage extends StatefulWidget {
 }
 
 class _MovieSearchPageState extends State<MovieSearchPage> {
+  static const Duration _debounceDuration = Duration(milliseconds: 500);
+
   final TextEditingController _searchController = TextEditingController();
 
   late final OmdbService _service;
+  Timer? _debounce;
   List<Movie> _movies = const [];
   bool _isLoading = false;
   String? _errorMessage;
@@ -30,17 +35,40 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
   void initState() {
     super.initState();
     _service = widget.service ?? context.read<OmdbService>();
+    _searchController.addListener(_onSearchChanged);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearchChanged() {
+    final query = _searchController.text.trim();
+
+    _debounce?.cancel();
+
+    if (query.isEmpty) {
+      setState(() {
+        _hasSearched = false;
+        _movies = const [];
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    _debounce = Timer(_debounceDuration, () {
+      _searchMovies();
+    });
   }
 
   Future<void> _searchMovies() async {
     final query = _searchController.text.trim();
 
+    _debounce?.cancel();
     FocusScope.of(context).unfocus();
 
     if (query.isEmpty) {
