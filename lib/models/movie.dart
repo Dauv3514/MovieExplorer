@@ -15,6 +15,15 @@ class Movie {
 
   bool get hasPoster => posterUrl.isNotEmpty && posterUrl != posterNotAvailable;
 
+  Map<String, String> toMap() {
+    return {
+      'imdbID': imdbId,
+      'Title': title,
+      'Year': year,
+      'Poster': posterUrl,
+    };
+  }
+
   factory Movie.fromJson(Map<String, dynamic> json) {
     return Movie(
       imdbId: json['imdbID'] as String? ?? '',
@@ -22,5 +31,9 @@ class Movie {
       year: json['Year'] as String? ?? 'Annee inconnue',
       posterUrl: json['Poster'] as String? ?? posterNotAvailable,
     );
+  }
+
+  factory Movie.fromMap(Map<String, dynamic> map) {
+    return Movie.fromJson(map);
   }
 }

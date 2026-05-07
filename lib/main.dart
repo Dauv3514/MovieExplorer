@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'providers/favorites_provider.dart';
 import 'providers/theme_provider.dart';
@@ -9,14 +10,17 @@ import 'ui/movie_search_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final preferences = await SharedPreferences.getInstance();
   try {
     await dotenv.load(fileName: '.env');
   } catch (_) {}
-  runApp(const MyApp());
+  runApp(MyApp(preferences: preferences));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, required this.preferences});
+
+  final SharedPreferences preferences;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +28,7 @@ class MyApp extends StatelessWidget {
       providers: [
         Provider<OmdbService>(create: (_) => OmdbService()),
         ChangeNotifierProvider<FavoritesProvider>(
-          create: (_) => FavoritesProvider(),
+          create: (_) => FavoritesProvider(preferences: preferences),
         ),
         ChangeNotifierProvider<ThemeProvider>(create: (_) => ThemeProvider()),
       ],
