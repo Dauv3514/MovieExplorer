@@ -39,12 +39,12 @@ class MyApp extends StatelessWidget {
             debugShowCheckedModeBanner: false,
             themeMode: themeProvider.themeMode,
             theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
+              colorScheme: ColorScheme.fromSeed(seedColor: Colors.lightBlue),
               useMaterial3: true,
             ),
             darkTheme: ThemeData(
               colorScheme: ColorScheme.fromSeed(
-                seedColor: Colors.red,
+                seedColor: Colors.lightBlue,
                 brightness: Brightness.dark,
               ),
               useMaterial3: true,

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,21 +22,27 @@ class MovieSearchPage extends StatefulWidget {
 
 class _MovieSearchPageState extends State<MovieSearchPage> {
   static const Duration _debounceDuration = Duration(milliseconds: 500);
+  static const List<String> _discoveryQueries = <String>[
+    'batman',
+    'avengers',
+    'harry potter',
+  ];
 
   final TextEditingController _searchController = TextEditingController();
 
   late final OmdbService _service;
   Timer? _debounce;
+  List<Movie> _initialMovies = const [];
   List<Movie> _movies = const [];
   bool _isLoading = false;
   String? _errorMessage;
-  bool _hasSearched = false;
 
   @override
   void initState() {
     super.initState();
     _service = widget.service ?? context.read<OmdbService>();
     _searchController.addListener(_onSearchChanged);
+    _loadInitialMovies();
   }
 
   @override
@@ -52,11 +59,7 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
     _debounce?.cancel();
 
     if (query.isEmpty) {
-      setState(() {
-        _hasSearched = false;
-        _movies = const [];
-        _errorMessage = null;
-      });
+      _restoreInitialMovies();
       return;
     }
 
@@ -73,7 +76,6 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
 
     if (query.isEmpty) {
       setState(() {
-        _hasSearched = true;
         _movies = const [];
         _errorMessage = 'Saisis un titre de film avant de lancer la recherche.';
       });
@@ -83,7 +85,6 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
-      _hasSearched = true;
       _movies = const [];
     });
 
@@ -121,6 +122,72 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
         });
       }
     }
+  }
+
+  Future<void> _loadInitialMovies() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final LinkedHashMap<String, Movie> uniqueMovies =
+          LinkedHashMap<String, Movie>();
+
+      for (final query in _discoveryQueries) {
+        final movies = await _service.searchMovies(query);
+
+        for (final movie in movies) {
+          uniqueMovies.putIfAbsent(movie.imdbId, () => movie);
+        }
+      }
+
+      if (!mounted) {
+        return;
+      }
+
+      final initialMovies = uniqueMovies.values.toList();
+
+      setState(() {
+        _initialMovies = initialMovies;
+        _movies = initialMovies;
+        _errorMessage = null;
+      });
+    } on OmdbException catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage = error.message;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        _errorMessage = 'Une erreur inattendue est survenue.';
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _restoreInitialMovies() {
+    if (_initialMovies.isEmpty) {
+      _loadInitialMovies();
+      return;
+    }
+
+    setState(() {
+      _movies = _initialMovies;
+      _errorMessage = null;
+    });
   }
 
   @override
@@ -177,15 +244,6 @@ class _MovieSearchPageState extends State<MovieSearchPage> {
     }
 
     if (_movies.isEmpty) {
-      if (!_hasSearched) {
-        return const Center(
-          child: Text(
-            'Lance une recherche pour afficher des films.',
-            textAlign: TextAlign.center,
-          ),
-        );
-      }
-
       return const Center(
         child: Text('Aucun film trouve.', textAlign: TextAlign.center),
       );
